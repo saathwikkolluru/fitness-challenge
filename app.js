@@ -24,6 +24,7 @@ const elements = {
   entryDate: document.getElementById("entryDate"),
   entryImages: document.getElementById("entryImages"),
   scorePreview: document.getElementById("scorePreview"),
+  entrySubmitButton: document.querySelector("#entryForm button[type=submit]"),
   profileForm: document.getElementById("profileForm"),
   profileName: document.getElementById("profileName"),
   profileGoal: document.getElementById("profileGoal"),
@@ -42,6 +43,8 @@ const elements = {
 const state = {
   currentUser: null
 };
+state.latestEntries = [];
+state.editingEntryId = null;
 
 const todayISO = new Date().toISOString().slice(0, 10);
 if (elements.entryDate) {
@@ -77,6 +80,43 @@ function formatDate(dateStr) {
     day: "numeric",
     year: "numeric"
   });
+}
+
+function clearEntryForm() {
+  state.editingEntryId = null;
+  elements.entryForm.reset();
+  elements.entryDate.value = todayISO;
+  if (elements.entrySubmitButton) {
+    elements.entrySubmitButton.textContent = "Post Score";
+  }
+  updateScorePreview();
+}
+
+function fillEntryForm(entry) {
+  if (!entry) {
+    clearEntryForm();
+    return;
+  }
+
+  state.editingEntryId = entry.id;
+  elements.entryDate.value = entry.entry_date;
+  CRITERIA.forEach((criteria) => {
+    const checkbox = elements.entryForm.elements[criteria.key];
+    if (checkbox) {
+      checkbox.checked = Boolean(entry[criteria.key]);
+    }
+  });
+
+  if (elements.entrySubmitButton) {
+    elements.entrySubmitButton.textContent = "Update Score";
+  }
+
+  updateScorePreview();
+  setActiveTab("post");
+}
+
+function findEntryById(entryId) {
+  return state.latestEntries.find((entry) => entry.id === entryId);
 }
 
 function setActiveTab(tabId) {
@@ -206,6 +246,9 @@ async function submitEntry(event) {
   if (!entryDate) return;
 
   const entry = { user_id: state.currentUser.id, entry_date: entryDate };
+  if (state.editingEntryId) {
+    entry.id = state.editingEntryId;
+  }
   CRITERIA.forEach((criteria) => {
     entry[criteria.key] = formData.get(criteria.key) === "on";
   });
@@ -225,6 +268,7 @@ async function submitEntry(event) {
   }
 
   elements.entryImages.value = "";
+  clearEntryForm();
   await refreshData();
   setActiveTab("feed");
 }
@@ -270,11 +314,27 @@ async function saveProfile(event) {
   await refreshData();
 }
 
+async function deleteEntry(entryId) {
+  if (!entryId) return;
+  const { error } = await client.from("daily_entries").delete().eq("id", entryId);
+  if (error) {
+    alert("Unable to delete entry.");
+    return;
+  }
+  if (state.editingEntryId === entryId) {
+    clearEntryForm();
+  }
+  await refreshData();
+}
+
 function renderFeed(entries) {
   if (!entries || entries.length === 0) {
+    state.latestEntries = [];
     elements.feedList.innerHTML = `<div class="card">No entries yet. Be the first to post today.</div>`;
     return;
   }
+
+  state.latestEntries = entries;
 
   elements.feedList.innerHTML = entries
     .map((entry) => {
@@ -297,6 +357,14 @@ function renderFeed(entries) {
             .join("")}</div>`
         : "";
 
+      const isOwner = state.currentUser && entry.user_id === state.currentUser.id;
+      const entryActions = isOwner
+        ? `<div class="entry-actions">
+            <button type="button" class="btn ghost" data-entry-edit="${entry.id}">Edit</button>
+            <button type="button" class="btn ghost" data-entry-delete="${entry.id}">Delete</button>
+          </div>`
+        : "";
+
       return `
         <div class="card feed-card">
           <div class="feed-header">
@@ -311,6 +379,7 @@ function renderFeed(entries) {
           </div>
           <div class="badges">${badges}</div>
           ${images}
+          ${entryActions}
         </div>
       `;
     })
@@ -365,7 +434,7 @@ function renderLeaderboard(entries) {
 async function refreshData() {
   const { data } = await client
     .from("daily_entries")
-    .select("id, entry_date, workout, steps, sleep, protein, no_sugar_fried, no_alcohol_smoking, water, images, created_at, users(id, name, photo_url)")
+    .select("id, user_id, entry_date, workout, steps, sleep, protein, no_sugar_fried, no_alcohol_smoking, water, images, created_at, users(id, name, photo_url)")
     .order("entry_date", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -382,6 +451,23 @@ function bindEvents() {
   elements.entryForm.addEventListener("submit", submitEntry);
   elements.profileForm.addEventListener("submit", saveProfile);
   elements.editProfileBtn.addEventListener("click", () => setActiveTab("profile"));
+  elements.feedList.addEventListener("click", async (event) => {
+    const editButton = event.target.closest("[data-entry-edit]");
+    if (editButton) {
+      const entry = findEntryById(editButton.dataset.entryEdit);
+      if (entry) {
+        fillEntryForm(entry);
+      }
+      return;
+    }
+
+    const deleteButton = event.target.closest("[data-entry-delete]");
+    if (deleteButton) {
+      const confirmed = confirm("Delete this entry? This cannot be undone.");
+      if (!confirmed) return;
+      await deleteEntry(deleteButton.dataset.entryDelete);
+    }
+  });
 
   elements.onboardingForm.addEventListener("submit", (event) => {
     event.preventDefault();
