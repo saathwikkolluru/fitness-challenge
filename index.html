@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BCG Fitness Challenge</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">7</div>
+        <div>
+          <div class="brand-title">BCG Fitness Challenge</div>
+          <div class="brand-subtitle">7 daily habits · 7 points</div>
+        </div>
+      </div>
+      <div class="profile-chip" id="profileChip">
+        <div class="avatar" id="chipAvatar">BC</div>
+        <div>
+          <div class="chip-name" id="chipName">Guest</div>
+          <div class="chip-meta" id="chipMeta">Set your goal</div>
+        </div>
+        <button class="btn ghost" id="editProfileBtn">Edit</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="feed">Feed</button>
+      <button class="tab" data-tab="post">Post</button>
+      <button class="tab" data-tab="leaderboard">Leaderboard</button>
+      <button class="tab" data-tab="profile">Profile</button>
+    </nav>
+
+    <main class="content">
+      <section class="panel active" id="feed">
+        <div class="panel-header">
+          <h2>Team Feed</h2>
+          <p>Share your daily progress and celebrate wins together.</p>
+        </div>
+        <div class="feed" id="feedList"></div>
+      </section>
+
+      <section class="panel" id="post">
+        <div class="panel-header">
+          <h2>Post Daily Score</h2>
+          <p>Pick the date and check off what you completed.</p>
+        </div>
+        <form class="card form" id="entryForm">
+          <div class="form-row">
+            <label for="entryDate">Date</label>
+            <input type="date" id="entryDate" name="entryDate" required />
+          </div>
+          <div class="criteria-grid">
+            <label class="criteria">
+              <input type="checkbox" name="workout" />
+              <span>Workout (30+ mins)</span>
+            </label>
+            <label class="criteria">
+              <input type="checkbox" name="steps" />
+              <span>10,000 steps</span>
+            </label>
+            <label class="criteria">
+              <input type="checkbox" name="sleep" />
+              <span>7+ hours sleep</span>
+            </label>
+            <label class="criteria">
+              <input type="checkbox" name="protein" />
+              <span>Protein &gt;= 1g/kg</span>
+            </label>
+            <label class="criteria">
+              <input type="checkbox" name="no_sugar_fried" />
+              <span>No refined sugar or fried food</span>
+            </label>
+            <label class="criteria">
+              <input type="checkbox" name="no_alcohol_smoking" />
+              <span>No alcohol or smoking</span>
+            </label>
+            <label class="criteria">
+              <input type="checkbox" name="water" />
+              <span>Water &gt;= 2.5L</span>
+            </label>
+          </div>
+          <div class="form-row">
+            <label for="entryImages">Upload images (optional)</label>
+            <input type="file" id="entryImages" accept="image/*" multiple />
+          </div>
+          <div class="form-actions">
+            <div class="score-preview">Score: <span id="scorePreview">0</span>/7</div>
+            <button class="btn primary" type="submit">Post Score</button>
+          </div>
+          <div class="hint">You can edit a past date — just re-submit for the same date.</div>
+        </form>
+      </section>
+
+      <section class="panel" id="leaderboard">
+        <div class="panel-header">
+          <h2>Leaderboard</h2>
+          <p>Total points across all days.</p>
+        </div>
+        <div class="leaderboard" id="leaderboardList"></div>
+      </section>
+
+      <section class="panel" id="profile">
+        <div class="panel-header">
+          <h2>Your Profile</h2>
+          <p>Update your name, goal, and profile photo.</p>
+        </div>
+        <form class="card form" id="profileForm">
+          <div class="form-row">
+            <label for="profileName">Name</label>
+            <input type="text" id="profileName" placeholder="Your name" required />
+          </div>
+          <div class="form-row">
+            <label for="profileGoal">Fitness goal for the year</label>
+            <input type="text" id="profileGoal" placeholder="Example: Run a half marathon" />
+          </div>
+          <div class="form-row">
+            <label for="profilePhoto">Profile photo (optional)</label>
+            <input type="file" id="profilePhoto" accept="image/*" />
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Save Profile</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="onboarding">
+    <div class="modal-card">
+      <h3>Welcome to the Challenge</h3>
+      <p>Enter your name to join. You will stay signed in on this device.</p>
+      <form id="onboardingForm">
+        <input type="text" id="onboardingName" placeholder="Your name" required />
+        <input type="text" id="onboardingGoal" placeholder="Your fitness goal (optional)" />
+        <button class="btn primary" type="submit">Get Started</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
